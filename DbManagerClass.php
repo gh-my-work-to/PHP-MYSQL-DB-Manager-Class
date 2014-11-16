@@ -1,5 +1,5 @@
 <?php
-class MyDbManageClass
+class DbManagerClass
 {
 	
 	private $mUrl;
@@ -9,11 +9,11 @@ class MyDbManageClass
 	private $mLink;
 	private $mResult;
 	
-	function __construct()
+	function __construct($url, $user, $pass)
 	{
-		$this->mUrl = "localhost";
-		$this->mUser = "tester";
-		$this->mPass = "tester";
+		$this->mUrl = $url;//"localhost";
+		$this->mUser = $user;//"tester";
+		$this->mPass = $pass;//"tester";
 		
 		$this->mLink = null;
 		$this->mResult = null;
@@ -22,42 +22,36 @@ class MyDbManageClass
 	function connect()
 	{
 		$this->mLink = mysql_connect ( $this->mUrl, $this->mUser, $this->mPass ) or //
-		die ( "MySQLへの接続に失敗しました。" );
+		die ( "ERROR! failed to connect to DB." );
 	}
 	
 	function retQueryed($sql)
 	{
-		// データベースを選択する
-		// $theDb = mysql_select_db ( $this->mDb, $this->mLink ) or die ( "データベースの選択に失敗しました。" );
-		
-		// クエリーを実行
+		// carry on query 
 		$this->mResult = mysql_query ( $sql, $this->mLink ) or //
-die ( "クエリの送信に失敗しました。<br />SQL:" . $sql );
+		die ( "ERROR! sending query: SQL:" . $sql );
 		return $this->mResult;
 	}
 	
-	function release()
+	function disconnect()
 	{
-		// 結果保持用メモリを開放する
+		// free memory
 		if ($this->mResult != null)
 		{
 			mysql_free_result ( $this->mResult );
 		}
 		
-		// MySQLへの接続を閉じるdoit
+		// disconnect
 		if ($this->mLink != null)
 		{
-			mysql_close ( $this->mLink ) or die ( "MySQL切断に失敗しました。" );
+			mysql_close ( $this->mLink ) or die ( "ERROR! disconnecting DB." );
+			$this->mLink = null;
 		}
-	}
-	
-	function toString()
-	{
-		printf ( "%s,%s,%s\n", $this->mUrl, $this->mUser, $this->mPass );
 	}
 	
 	function removeDupli($tableName, $cid, $cname)
 	{
+		// remove duplicated records
 		$sql = "DELETE FROM $tableName WHERE $cid NOT IN (
 		SELECT min_id FROM (
 		SELECT MIN($cid) min_id FROM $tableName GROUP BY $cname
@@ -65,7 +59,7 @@ die ( "クエリの送信に失敗しました。<br />SQL:" . $sql );
 		)";
 		
 		mysql_query ( $sql, $this->mLink ) or //
-die ( "クエリの送信に失敗しました。SQL:" . $sql );
+		die ( "ERROR! sending query on removing duplicated records: SQL:" . $sql );
 	}
 
 }
